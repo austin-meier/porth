@@ -1,4 +1,5 @@
 import sys
+import subprocess
 
 iota_counter = 0
 
@@ -36,8 +37,9 @@ def cdr(x: tuple) -> int:
 
 def simulate_program(program):
     stack = []
+
+    assert COUNT_OPS == 4, "Exhaustive handling of operation in simulation"
     for op in program:
-        assert COUNT_OPS == 4, "Exhaustive handling of operation in simulation"
         if car(op) == OP_PUSH:
             stack.append(cdr(op))
         elif car(op) == OP_PLUS:
@@ -55,8 +57,40 @@ def simulate_program(program):
             assert False, "Unreachable"
 
 
-def compile_program(program):
-    assert False, "Not implemented yet"
+def compile_program(program, out_file_path: str):
+    with open(out_file_path, "w") as file:
+        file.write("segment .text\n")
+        file.write("global _start\n")
+        file.write("_start:\n")
+
+        assert COUNT_OPS == 4, "Exhaustive handling of operation in simulation"
+        for op in program:
+            if car(op) == OP_PUSH:
+                file.write(f"    ;; push {cdr(op)};;\n")
+                file.write(f"    push {cdr(op)}\n")
+            elif car(op) == OP_PLUS:
+                file.write(f"    ;; plus ;;\n")
+                file.write(f"    pop rax \n")
+                file.write(f"    pop rbx \n")
+                file.write(f"    add rax, rbx \n")
+                file.write(f"    push rax \n")
+            elif car(op) == OP_MINUS:
+                file.write(f"    ;; minus ;;\n")
+                file.write(f"    pop rax \n")
+                file.write(f"    pop rbx \n")
+                file.write(f"    sub rax, rbx \n")
+                file.write(f"    push rax \n")
+            elif car(op) == OP_DUMP:
+                file.write(f"    ;; dump ;;\n")
+                file.write(f"    ;; TODO: not implemented ;;\n")
+            else:
+                print(car(op))
+                assert False, "unreachable"
+            file.write("\n")
+
+        file.write("    mov rax, 60\n")
+        file.write("    mov rdi, 29\n")
+        file.write("    syscall\n")
 
 def print_usage():
     print("Usage: porth <SUBCOMMAND> [ARGS]")
@@ -64,6 +98,10 @@ def print_usage():
     print("    sim    Simulate the program (Default if no args provided)")
     print("    comp   Compile the program")
     return
+
+def call_cmd(cmd: list[str]):
+    print(' '.join(cmd))
+    subprocess.call(cmd)
 
 program = [
     push(34),
@@ -79,17 +117,19 @@ program = [
 if __name__ == "__main__":
 
     default_subcommand = "sim"
+    output_name = "output"
 
     if len(sys.argv) > 1:
         subcommand = sys.argv[1].lower()
-        print("TEST")
     else:
         subcommand = default_subcommand
 
     if subcommand == "sim":
         simulate_program(program)
     elif subcommand == "comp" or subcommand == "compile":
-        compile_program(program)
+        compile_program(program, f"{output_name}.asm")
+        call_cmd(["nasm", "-felf64", f"{output_name}.asm"])
+        call_cmd(["ld", "-o", output_name, f"{output_name}.o"])
     elif subcommand == "help":
         print_usage()
         exit(1)
