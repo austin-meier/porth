@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include <unistd.h>
 
+/* This program was used to rip the ASM code for writing a character buffer. Used godbolt to convert to ASM*/
 void dump(uint64_t x) {
   char buffer[32];
   size_t idx = 1;

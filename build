@@ -1,5 +1,0 @@
-#!/bin/sh
-
-nasm -f elf64 output.asm
-ld -o output output.o
-./output
