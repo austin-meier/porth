@@ -41,14 +41,14 @@ _start:
     push 35
 
     ;; plus ;;
-    pop rax 
-    pop rbx 
-    add rax, rbx 
-    push rax 
+    pop rax
+    pop rbx
+    add rax, rbx
+    push rax
 
     ;; dump ;;
-    pop rdi 
-    call dump 
+    pop rdi
+    call dump
 
     ;; push 500;;
     push 500
@@ -57,14 +57,37 @@ _start:
     push 80
 
     ;; minus ;;
-    pop rax 
-    pop rbx 
-    sub rbx, rax 
-    push rbx 
+    pop rax
+    pop rbx
+    sub rbx, rax
+    push rbx
 
     ;; dump ;;
-    pop rdi 
-    call dump 
+    pop rdi
+    call dump
+
+    ;; push 22;;
+    push 22
+
+    ;; push 10;;
+    push 10
+
+    ;; minus ;;
+    pop rax
+    pop rbx
+    sub rbx, rax
+    push rbx
+
+    ;; dump ;;
+    pop rdi
+    call dump
+
+    ;; push 11;;
+    push 11
+
+    ;; dump ;;
+    pop rdi
+    call dump
 
     mov rax, 60
     mov rdi, 29

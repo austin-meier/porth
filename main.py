@@ -103,20 +103,20 @@ def compile_program(program, out_file_path: str):
                 file.write(f"    push {cdr(op)}\n")
             elif car(op) == OP_PLUS:
                 file.write(f"    ;; plus ;;\n")
-                file.write(f"    pop rax \n")
-                file.write(f"    pop rbx \n")
-                file.write(f"    add rax, rbx \n")
-                file.write(f"    push rax \n")
+                file.write(f"    pop rax\n")
+                file.write(f"    pop rbx\n")
+                file.write(f"    add rax, rbx\n")
+                file.write(f"    push rax\n")
             elif car(op) == OP_MINUS:
                 file.write(f"    ;; minus ;;\n")
-                file.write(f"    pop rax \n")
-                file.write(f"    pop rbx \n")
-                file.write(f"    sub rbx, rax \n")
-                file.write(f"    push rbx \n")
+                file.write(f"    pop rax\n")
+                file.write(f"    pop rbx\n")
+                file.write(f"    sub rbx, rax\n")
+                file.write(f"    push rbx\n")
             elif car(op) == OP_DUMP:
                 file.write(f"    ;; dump ;;\n")
-                file.write(f"    pop rdi \n")
-                file.write(f"    call dump \n")
+                file.write(f"    pop rdi\n")
+                file.write(f"    call dump\n")
             else:
                 print(car(op))
                 assert False, "unreachable"
@@ -126,48 +126,72 @@ def compile_program(program, out_file_path: str):
         file.write("    mov rdi, 29\n")
         file.write("    syscall\n")
 
-def print_usage():
-    print("Usage: porth <SUBCOMMAND> [ARGS]")
+def usage(program: str):
+    print(f"Usage: {program} <SUBCOMMAND> [ARGS]")
     print("SUBCOMMANDS: ")
-    print("    sim    Simulate the program (Default if no args provided)")
-    print("    comp   Compile the program")
-    return
+    print("    sim <file>   Simulate the program (Default if no args provided)")
+    print("    comp <file>  Compile the program")
+
+def parse_word_as_op(word: str) -> int:
+    assert COUNT_OPS == 4, "Exhaustive op handling in parse_word_as_op"
+    if word == '+':
+        return plus()
+    elif word == '-':
+        return minus()
+    elif word == '.':
+        return dump()
+    else:
+        return push(int(word))
+
+def load_program_from_file(file_path: str):
+    with open(file_path, "r") as file:
+        return [parse_word_as_op(word) for word in file.read().split()]
 
 def call_cmd(cmd: list[str]):
     print(' '.join(cmd))
     subprocess.call(cmd)
 
-program = [
-    push(34),
-    push(35),
-    plus(),
-    dump(),
-    push(500),
-    push(80),
-    minus(),
-    dump()
-]
+def uncons(coll):
+    return (coll[0], coll[1:])
 
 if __name__ == "__main__":
 
-    default_subcommand = "sim"
     output_name = "output"
+    argv = sys.argv
 
-    if len(sys.argv) > 1:
-        subcommand = sys.argv[1].lower()
-    else:
-        subcommand = default_subcommand
+    assert len(argv) >= 1
+    (program_name, argv) = uncons(argv)       # remove program name from args list
+
+    if len(argv) < 1:
+        usage(program_name)
+        print("ERROR: No subcommand provided")
+        exit(1)
+
+    (subcommand, argv) = uncons(argv)
 
     if subcommand == "sim":
+        if len(argv) < 1:
+            usage(program_name)
+            print("ERROR: No file is provided for the simulation")
+            exit(1)
+        (program_path, argv) = uncons(argv)
+        program = load_program_from_file(program_path)
+
         simulate_program(program)
     elif subcommand == "comp" or subcommand == "compile":
+        if len(argv) < 1:
+            usage(program_name)
+            print("ERROR: No file is provided for the compilation")
+            exit(1)
+        (program_path, argv) = uncons(argv)
+        program = load_program_from_file(program_path)
         compile_program(program, f"{output_name}.asm")
         call_cmd(["nasm", "-felf64", f"{output_name}.asm"])
         call_cmd(["ld", "-o", output_name, f"{output_name}.o"])
     elif subcommand == "help":
-        print_usage()
+        usage(program_name)
         exit(1)
     else:
-        print_usage()
+        usage(program_name)
         print(f"ERROR: unknown subcommand {subcommand}")
         exit(1)
